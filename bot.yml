@@ -1,0 +1,334 @@
+id: 845d9020-d9d6-46fa-b7a1-8de22e4c52ac
+revision: ee8e014b504d522cc6a32e2f396f2dad05605e47
+name: botpokeinfo
+tag: null
+deleted_at: null
+desc: telegram bot
+timezone: 7
+flows:
+    default:
+        active: true
+        volatile: true
+        fallback: false
+        intents:
+            defaultIntent:
+                type: text
+                initial: false
+                fallback: true
+        states:
+            init:
+                transitions:
+                    init:
+                        fallback: true
+                action: sayDontUnderstand
+                initial: true
+                end: true
+        actions:
+            sayDontUnderstand:
+                type: text
+                options:
+                    text: 'I am really sorry, I do not understand :('
+        methods: {}
+    flow_register:
+        active: true
+        volatile: true
+        intents:
+            startIntent:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    -
+                        nlu: start_nlu
+                        match: start
+                    -
+                        nlu: hello_nlu
+                        match: hello
+            yesIntent:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: confirmation_nlu
+                    match: 'yes'
+            noIntent:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: confirmation_nlu
+                    match: 'no'
+            nameIntent:
+                type: text
+                initial: false
+                fallback: false
+                priority: 10
+                classifier:
+                    nlu: name_nlu
+            nextIntent:
+                type: command
+                initial: false
+                fallback: false
+                condition: content == "next"
+        states:
+            init:
+                transitions:
+                    askName:
+                        condition: intent == "startIntent" && !data.name
+                    greetings:
+                        condition: intent == "startIntent" && data.name
+                initial: true
+            askName:
+                transitions:
+                    confirmation:
+                        condition: intent == "nameIntent"
+                        mapping:
+                            data.name: content
+                action: askName
+            confirmation:
+                transitions:
+                    askName:
+                        condition: intent == "noIntent"
+                    greetings:
+                        condition: intent == "yesIntent"
+                action: confirmation
+            greetings:
+                transitions: {}
+                action:
+                    -
+                        name: welcome
+                    -
+                        name: saveUser
+                end: true
+            reset:
+                transitions:
+                    endState:
+                        condition: intent == "nextIntent"
+                action:
+                    -
+                        name: resetUser
+                    -
+                        name: nextCommand
+                float:
+                    condition: content == "reset"
+                initial: false
+                end: false
+            endState:
+                transitions: {}
+                action: resetSuccessful
+                enter:
+                    data.name: 'null'
+                    data.value: 'null'
+                end: true
+        actions:
+            confirmation:
+                type: text
+                options:
+                    text: So your name is $(data.name) ?
+            welcome:
+                type: text
+                options:
+                    text: 'Welcome to PokeBot, $(data.name)! You can send "Pokemon information" to get information about a Pokemon'
+            unknownUser:
+                type: text
+                options:
+                    text: 'Sorry, the word is not recognized as a name, please try again'
+            askName:
+                type: text
+                options:
+                    text: 'Hello, what''s your name?'
+            saveUser:
+                type: api
+                options:
+                    uri: 'https://djatmico.app.n8n.cloud/webhook/webhook-kata'
+                    method: POST
+                    isAsync: false
+                    body:
+                        full_name: $(data.name)
+            resetUser:
+                type: api
+                options:
+                    uri: 'https://djatmico.app.n8n.cloud/webhook/reset'
+                    method: POST
+                    isAsync: false
+                    body:
+                        full_name: $(data.name)
+            resetSuccess:
+                type: text
+                options:
+                    text: Reset successful
+            resetSuccessful:
+                type: text
+                options:
+                    text: Reset Successful
+            nextCommand:
+                type: command
+                options:
+                    command: next
+        methods: {}
+    flow_pokemon:
+        active: true
+        volatile: true
+        intents:
+            pokeInfoIntent:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    nlu: pokeinformation_nlu
+                    match: information
+            freeIntent:
+                type: text
+                initial: false
+                fallback: false
+                priority: -10
+            nextIntent:
+                type: command
+                initial: false
+                fallback: false
+                condition: content == "next"
+        states:
+            init:
+                transitions:
+                    askInformation:
+                        condition: intent == "pokeInfoIntent"
+                initial: true
+            askInformation:
+                transitions:
+                    pokemonInfo:
+                        condition: intent == "freeIntent" && content != ""
+                        mapping:
+                            data.value: content
+                action: askInformation
+            pokemonInfo:
+                transitions: {}
+                action:
+                    -
+                        name: getPokeInfo
+                    -
+                        name: pokemonFound
+                        condition: result.id
+                    -
+                        name: pokemonNotFound
+                        condition: '!result.id'
+                    -
+                        name: pokemonImage
+                        condition: result.id
+                end: true
+            reset:
+                transitions:
+                    endState:
+                        condition: intent == "nextIntent"
+                action:
+                    -
+                        name: resetUser
+                    -
+                        name: nextCommand
+                float:
+                    condition: content == "reset"
+                end: false
+            endState:
+                transitions: {}
+                action: resetSuccessful
+                enter:
+                    data.name: 'null'
+                    data.value: 'null'
+                end: true
+        actions:
+            askInformation:
+                type: text
+                options:
+                    text: Which Pokemon do you need the info for?
+            getPokeInfo:
+                type: api
+                options:
+                    uri: 'https://pokeapi.co/api/v2/pokemon/$(data.value)'
+                    method: GET
+                    isAsync: false
+            pokemonFound:
+                type: text
+                options:
+                    text: >-
+                        $(result.name) is an <$(result.types[0].type.name)> type Pokemon with $(result.weight) weight an $(result.height) height,
+                        here's a picture of $(result.name).
+            pokemonNotFound:
+                type: text
+                options:
+                    text: Sorry we don't have information for <$(data.value)>
+            pokemonImage:
+                type: template
+                options:
+                    type: image
+                    items:
+                        originalContentUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$(result.id).png'
+                        previewImageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$(result.id).png'
+            resetUser:
+                type: api
+                options:
+                    uri: 'https://djatmico.app.n8n.cloud/webhook/reset'
+                    method: POST
+                    isAsync: false
+                    body:
+                        full_name: $(data.name)
+            resetSuccessful:
+                type: text
+                options:
+                    text: Reset successful
+            nextCommand:
+                type: command
+                options:
+                    command: next
+        methods: {}
+nlus:
+    name_nlu:
+        type: nl
+        options:
+            threshold: 0.8
+            output: phrase
+            entity: kata
+            nluId: 'dodyjatmico:pokeinfo-bot-wine'
+    hello_nlu:
+        type: keyword
+        options:
+            keywords:
+                hello:
+                    - hi
+                    - hai
+                    - halo
+                    - hallo
+                    - halo
+                    - hey
+                    - hei
+                    - hello
+                    - helo
+    pokeinformation_nlu:
+        type: keyword
+        options:
+            keywords:
+                information:
+                    - pokemon information
+                    - p
+    confirmation_nlu:
+        type: keyword
+        options:
+            keywords:
+                'yes':
+                    - 'yes'
+                    - iya
+                    - ya
+                    - 'y'
+                'no':
+                    - 'no'
+                    - tidak
+                    - 'n'
+    start_nlu:
+        type: keyword
+        options:
+            keywords:
+                start:
+                    - /start
+                    - start
+                    - /mulai
+                    - mulai
+methods: {}
+config: {}

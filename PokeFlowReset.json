@@ -1,0 +1,105 @@
+{
+  "name": "PokeFlowReset",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reset",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4fa8dfc7-c8c6-429b-93fc-4484f0f5bc75",
+      "name": "Webhook",
+      "webhookId": "1ae6d2f7-b731-4eab-97ce-57439c934bac"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Data saved successfully\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "6c477032-87b7-4cb9-b8a5-5f1f9032678a",
+      "name": "Respond to Webhook 2"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "users",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "name",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.full_name }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "11d23a8a-95a0-4869-abaf-ab928f67e8b8",
+      "name": "Delete a row",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "t2mFRywaK6yEHeZt",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Delete a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a row": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "41719298-dffd-4170-87e8-1ea7f8c52bbe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c860e08da53abd10475b6ec9daebd99ddbb12c15cbd5cb2af60f2ff64eb72641"
+  },
+  "id": "6LakFRnZblIaMlX7",
+  "tags": []
+}
