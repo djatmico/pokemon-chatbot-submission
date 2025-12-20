@@ -31,13 +31,14 @@ Specifically, **n8n** is utilized as a middleware to **validate user identity** 
 ## 🔗 Architecture Overview
 
 The following diagram illustrates the data flow, highlighting n8n's role in user validation:
-* **Telegram Bot Link:** https://web.telegram.org/a/#8002434807 
   
 ![Architecture Diagram](diagram.png)
 
 ## 📷 Telegram Bot Capture
 
 The following image shows the Telegram Bot Capture process:
+
+* **Telegram Bot Link:** https://t.me/pokeinf_bot 
 
 ![Telegram Bot Capture](tele.png)
 ![Telegram Bot Capture](tele2.png)
