@@ -84,6 +84,9 @@ create table users (
 ## 📂 Repository Structure
 * `README.md` - Project documentation.
 * `diagram.png` - Visual representation of the system architecture.
+* `tele.png` - Telegram bot capture
+* `tele2.png` - Telegram bot capture
+* `reset.png` - Telegram bot capture
 * `PokeFlow.json` - Main n8n workflow for user validation.
 * `PokeFlow Reset.json` - n8n workflow for resetting session.
 * `mybot.yml` - Kata Platform source code export.
